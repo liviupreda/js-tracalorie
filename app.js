@@ -75,6 +75,23 @@ const ItemCtrl = (function() {
 
       return found;
     },
+    deleteItem: function(id) {
+      // Get the ids using map() method; like forEach but it returns something
+      // The map() method creates a new array with the results
+      // of calling a provided function on every element in the calling array.
+      ids = data.items.map(function(item) {
+        return item.id;
+      });
+
+      // Get index
+      const index = ids.indexOf(id);
+
+      // Remove item to delete from data
+      data.items.splice(index, 1);
+    },
+    clearAllItems: function() {
+      data.items = [];
+    },
     setCurrentItem: function(item) {
       data.currentItem = item;
     },
@@ -110,6 +127,7 @@ const UICtrl = (function() {
     addBtn: '.add-btn',
     updateBtn: '.update-btn',
     deleteBtn: '.delete-btn',
+    clearBtn: '.clear-btn',
     backBtn: '.back-btn',
     itemNameInput: '#item-name',
     itemCaloriesInput: '#item-calories',
@@ -181,6 +199,11 @@ const UICtrl = (function() {
         }
       });
     },
+    deleteListItem: function(id) {
+      const itemId = `#item-${id}`;
+      const item = document.querySelector(itemId);
+      item.remove();
+    },
     clearInput: function() {
       document.querySelector(UISelectors.itemNameInput).value = '';
       document.querySelector(UISelectors.itemCaloriesInput).value = '';
@@ -194,6 +217,16 @@ const UICtrl = (function() {
         UISelectors.itemCaloriesInput
       ).value = ItemCtrl.getCurrentItem().calories;
       UICtrl.showEditState();
+    },
+    removeItems: function() {
+      let listItems = document.querySelectorAll(UISelectors.listItems);
+
+      // Turn node list into array
+      listItems = Array.from(listItems);
+
+      listItems.forEach(function(item) {
+        item.remove();
+      });
     },
     hideList: function() {
       document.querySelector(UISelectors.itemList).style.display = 'none';
@@ -256,6 +289,21 @@ const App = (function(ItemCtrl, UICtrl) {
     document
       .querySelector(UISelectors.updateBtn)
       .addEventListener('click', itemUpdateSubmit);
+
+    // Delete item event
+    document
+      .querySelector(UISelectors.deleteBtn)
+      .addEventListener('click', itemDeleteSubmit);
+
+    // Back button event
+    document
+      .querySelector(UISelectors.backBtn)
+      .addEventListener('click', UICtrl.clearEditState);
+
+    // Clear items event
+    document
+      .querySelector(UISelectors.clearBtn)
+      .addEventListener('click', clearAllItemsClick);
   };
 
   // Add item submit
@@ -305,21 +353,53 @@ const App = (function(ItemCtrl, UICtrl) {
   const itemUpdateSubmit = function(e) {
     // Get item input
     const input = UICtrl.getItemInput();
-
     // Update item
     const updatedItem = ItemCtrl.updateItem(input.name, input.calories);
-
     // Update UI with edited data
     UICtrl.updateListItem(updatedItem);
+    // Get total calories
+    const totalCalories = ItemCtrl.getTotalCalories();
+    // Show total calories in the UI
+    UICtrl.showTotalCalories(totalCalories);
+    UICtrl.clearEditState();
+    e.preventDefault();
+  };
+
+  // Delete Item Submit
+  const itemDeleteSubmit = function(e) {
+    // Get current item
+    const currentItem = ItemCtrl.getCurrentItem();
+
+    // Delete item from data structure
+    ItemCtrl.deleteItem(currentItem.id);
+
+    // Delete item from UI
+    UICtrl.deleteListItem(currentItem.id);
+
+    // Get total calories
+    const totalCalories = ItemCtrl.getTotalCalories();
+    // Show total calories in the UI
+    UICtrl.showTotalCalories(totalCalories);
+    UICtrl.clearEditState();
+
+    e.preventDefault();
+  };
+
+  // Clear all items
+  const clearAllItemsClick = function() {
+    // Delete all items from data structure
+    ItemCtrl.clearAllItems();
 
     // Get total calories
     const totalCalories = ItemCtrl.getTotalCalories();
     // Show total calories in the UI
     UICtrl.showTotalCalories(totalCalories);
 
-    UICtrl.clearEditState();
+    // Remove from UI
+    UICtrl.removeItems();
 
-    e.preventDefault();
+    // Hide ul
+    UICtrl.hideList();
   };
 
   // Public methods
